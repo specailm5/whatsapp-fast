@@ -19,6 +19,16 @@ Thumbs.db
 .idea/
 *.suo
 
+# Agent / AI-tooling metadata (not part of the project itself)
+.agent/
+.claude/
+.opencode/
+.cursor/
+.continue/
+.codex/
+.aider*
+.copilot/
+
 # Tauri / Rust build outputs
 target/
 **/target/
