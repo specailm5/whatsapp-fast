@@ -1,7 +1,7 @@
 {
   "name": "wisp",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fast native Windows shell for WhatsApp Web (Tauri)",
   "scripts": {
     "desktop:dev": "pnpm --filter @wisp/desktop tauri dev",
