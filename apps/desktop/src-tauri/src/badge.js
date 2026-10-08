@@ -1,4 +1,4 @@
-/* WhatsApp Fast — Taskbar unread-badge driver.
+/* Wisp — Taskbar unread-badge driver.
  *
  * The native shell wants a taskbar overlay badge (and a taskbar flash on a new
  * message while the window is unfocused), but per ADR-002 we never read Meta's

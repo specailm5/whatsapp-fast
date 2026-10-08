@@ -466,7 +466,7 @@ fn open_settings(app: &AppHandle) {
     }
     let builder =
         WebviewWindowBuilder::new(app, "settings", WebviewUrl::App("settings.html".into()))
-            .title("WhatsApp Fast — Settings")
+            .title("Wisp — Settings")
             .inner_size(720.0, 860.0)
             .min_inner_size(480.0, 600.0)
             .resizable(true)
@@ -1071,7 +1071,7 @@ pub fn run() {
 
             // Main WhatsApp Web window (desktop user-agent + navigation guard).
             let win = WebviewWindowBuilder::new(app, "main", WebviewUrl::External(WHATSAPP_WEB_URL.parse().expect("valid url")))
-                .title("WhatsApp Fast")
+                .title("Wisp")
                 .inner_size(1200.0, 800.0)
                 .min_inner_size(360.0, 600.0)
                 .center()

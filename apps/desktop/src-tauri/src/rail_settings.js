@@ -1,4 +1,4 @@
-/* WhatsApp Fast — nav-rail Settings entry.
+/* Wisp — nav-rail Settings entry.
  *
  * Injected into web.whatsapp.com at document-start. Adds a Settings gear as a real
  * item INSIDE the left nav rail (above the Chats icon) and opens the separate

@@ -1,4 +1,4 @@
-/* WhatsApp Fast — notification-privacy wrapper.
+/* Wisp — notification-privacy wrapper.
  *
  * Wraps window.Notification so the privacy suite's "notification mode" (carried by
  * <html data-wa-notif>, set by privacy_boot.js) can control what the web client's

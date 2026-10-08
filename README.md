@@ -1,4 +1,4 @@
-# WhatsApp Fast
+# Wisp
 
 A fast, low-memory **native Windows shell** for the **official WhatsApp Web** client, built
 with **Tauri 2** (Rust + OS WebView2).
@@ -48,13 +48,13 @@ with **Tauri 2** (Rust + OS WebView2).
 ## Build
 ```bash
 pnpm install
-pnpm --filter @whatsapp-fast/desktop tauri dev      # run in dev
-pnpm --filter @whatsapp-fast/desktop tauri build    # produce NSIS installer (.exe)
+pnpm --filter @wisp/desktop tauri dev      # run in dev
+pnpm --filter @wisp/desktop tauri build    # produce NSIS installer (.exe)
 ```
 
 The NSIS installer is written to:
-  `apps/desktop/src-tauri/target/release/bundle/nsis/WhatsApp Fast_0.1.0_x64-setup.exe`
-  (confirmed ~2.3 MB). The release binary is `apps/desktop/src-tauri/target/release/whatsapp-fast.exe`.
+  `apps/desktop/src-tauri/target/release/bundle/nsis/Wisp_0.1.0_x64-setup.exe`
+  (confirmed ~2.3 MB). The release binary is `apps/desktop/src-tauri/target/release/wisp.exe`.
 
 ## Verification / CI
 
@@ -89,6 +89,10 @@ This app only hosts Meta's **official** WhatsApp Web client; it does not reverse
 abuse the WhatsApp protocol. The user scans a QR code with their own phone and signs in as
 themselves. Please respect WhatsApp's Terms of Service and use the app for personal, lawful
 messaging.
+
+Wisp is an independent, unofficial client. It is **not affiliated with, sponsored by, or endorsed
+by Meta Platforms, Inc.** "WhatsApp" is a trademark of Meta Platforms, Inc., used here only to
+describe the service this client connects to.
 
 ## Architecture
 See [ARCHITECTURE.md](ARCHITECTURE.md) and `docs/decisions/`.

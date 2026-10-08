@@ -1,5 +1,5 @@
 [package]
-name = "whatsapp-fast"
+name = "wisp"
 version = "0.1.0"
 description = "Fast native Windows shell for WhatsApp Web"
 authors = ["you"]
@@ -7,7 +7,7 @@ edition = "2021"
 rust-version = "1.97"
 
 [lib]
-name = "whatsapp_fast_lib"
+name = "wisp_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

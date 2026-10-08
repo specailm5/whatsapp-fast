@@ -1,17 +1,19 @@
-# WhatsApp Fast — Brand & Logo Kit
+# Wisp — Brand & Logo Kit
 
-The logo for **WhatsApp Fast**: a fast, low-memory **native Windows shell** for the official
-WhatsApp Web client.
+The logo for **Wisp**: a fast, low-memory **native Windows client** for the official WhatsApp Web.
 
-## The idea
+## The name & the idea
 
-A **speech bubble with a lightning bolt knocked out of it** — _messaging_ + _speed_ in one
-form. The bolt is negative space (a real hole in the bubble), so the mark stays a single bold
-silhouette that survives from a 16 px favicon up to signage.
+**Wisp** — something light, quick and faint. It carries the product's positioning (fast,
+lightweight, privacy-forward) without leaning on a trademark.
 
-- **Category:** messaging / chat — anchored by the green (kept from the previous icon) and the bubble.
+The mark is a **speech bubble with a lightning bolt knocked out of it** — _messaging_ + _speed_
+in one form. The bolt is negative space (a real hole in the bubble), so the mark stays a single
+bold silhouette that survives from a 16 px favicon up to signage.
+
+- **Category:** messaging / chat — anchored by the green and the bubble.
 - **Distinct from:** WhatsApp's handset-in-bubble, Telegram's paper plane, Signal's plain bubble.
-- **One idea:** "the fast way to WhatsApp."
+- **One idea:** "the fast way to WhatsApp Web."
 
 ## Files
 
@@ -19,19 +21,19 @@ Production-ready (vector, no live text):
 
 | File | Use |
 | --- | --- |
-| `whatsapp-fast-symbol.svg` | Primary symbol, brand green, bolt knocked out. |
-| `whatsapp-fast-symbol-mono.svg` | One-colour master — recolour to any solid ink. |
-| `whatsapp-fast-symbol-small.svg` | Small-size cut (blunter tail, thicker bolt) for ≤24 px. |
-| `whatsapp-fast-app-icon.svg` | Full-bleed green tile + white bubble (app/Windows icon). |
+| `wisp-symbol.svg` | Primary symbol, brand green, bolt knocked out. |
+| `wisp-symbol-mono.svg` | One-colour master — recolour to any solid ink. |
+| `wisp-symbol-small.svg` | Small-size cut (blunter tail, thicker bolt) for ≤24 px. |
+| `wisp-app-icon.svg` | Full-bleed green tile + white bubble (app/Windows icon). |
 | `exports/` | Black / white / brand-mono, square, favicon and app-icon SVG + PNG variants, plus the full web/PWA icon set (`favicon.ico`, `icon-*.png`, `maskable-512.png`, `site.webmanifest`, `head-snippet.html`). |
 
-**Provisional (placeholder type, not production):** `whatsapp-fast-lockup-horizontal.svg`,
-`whatsapp-fast-lockup-stacked.svg`, `whatsapp-fast-wordmark.svg`. These use a system sans
-(Segoe UI / Arial) as a stand-in. Before release, set the wordmark in a licensed typeface and
-**outline it to paths** (no live `<text>` in shipped vectors).
+**Provisional (placeholder type, not production):** `wisp-lockup-horizontal.svg`,
+`wisp-lockup-stacked.svg`, `wisp-wordmark.svg`. These use a system sans (Segoe UI / Arial) as a
+stand-in. Before release, set the wordmark in a licensed typeface and **outline it to paths**
+(no live `<text>` in shipped vectors).
 
 The application icon set in `apps/desktop/src-tauri/icons/` and `apps/desktop/app-icon.png`
-were regenerated from `whatsapp-fast-app-icon.svg`.
+were generated from `wisp-app-icon.svg`.
 
 ## Colour
 
@@ -49,9 +51,9 @@ white symbol; on the green tile, the bolt reads through as the tile colour.
 ## Clear space & minimum sizes
 
 - **Clear space:** keep a margin of at least the width of the **bolt's waist** (roughly 1/6 of the
-  bubble's height) on every side. Nothing intrudes on it.
-- **Minimum size:** symbol **16 px** (use `whatsapp-fast-symbol-small.svg` at ≤24 px); horizontal
-  lockup **≥120 px** wide; stacked lockup **≥96 px** wide.
+  bubble's height) on every side.
+- **Minimum size:** symbol **16 px** (use `wisp-symbol-small.svg` at ≤24 px); horizontal lockup
+  **≥110 px** wide; stacked lockup **≥96 px** wide.
 
 ## Backgrounds
 
@@ -68,9 +70,14 @@ white symbol; on the green tile, the bolt reads through as the tile colour.
 - Don't swap the bolt for another icon, or add effects.
 - Don't use the provisional lockups as-is; outline the wordmark first.
 
-## Trademark note
+## Naming & trademark note
 
-"WhatsApp" is a trademark of Meta Platforms, Inc. This app is an unofficial, ToS-safe **shell for
-the official WhatsApp Web client** and is not affiliated with or endorsed by Meta. If the product
-is distributed publicly, confirm the name and its use of the word "WhatsApp" with a trademark
-professional, and keep the "unofficial" disclaimer visible in the README/about.
+The product is named **Wisp** specifically so it does **not** use Meta's "WhatsApp" trademark in its
+name. Wisp is an unofficial, ToS-safe **client for the official WhatsApp Web** and is not
+affiliated with, sponsored by, or endorsed by Meta Platforms, Inc.
+
+- ✅ Descriptive references (allowed): "a fast client for **WhatsApp Web**", "opens **whatsapp://**
+  links", "hosts the official **WhatsApp Web**".
+- 🚫 Brand use (avoid): naming the product "WhatsApp…", implying endorsement, or using Meta's logo.
+- Keep an "unofficial / not affiliated with Meta" disclaimer visible in the README, About and store
+  listing, and have the product name checked by a trademark professional before public release.

@@ -1,4 +1,4 @@
-/* WhatsApp Fast — Privacy controller (replaces the old hardcoded-selector engine).
+/* Wisp — Privacy controller (replaces the old hardcoded-selector engine).
  *
  * The blur itself is delivered by the embedded "Privacy Suite for WhatsApp Web"
  * DEFAULT-BLUR stylesheet (styles.css), which is pure CSS and blurs by default so

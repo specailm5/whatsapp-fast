@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "WhatsApp Fast",
+  "productName": "Wisp",
   "version": "0.1.0",
-  "identifier": "com.whatsappfast.desktop",
+  "identifier": "com.wisp.desktop",
   "build": {
     "frontendDist": "../ui"
   },
@@ -83,6 +83,7 @@
     "deep-link": {
       "desktop": {
         "schemes": [
+          "wisp",
           "whatsapp"
         ]
       }

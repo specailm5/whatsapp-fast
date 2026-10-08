@@ -1,4 +1,4 @@
-// WhatsApp Fast — selector dump (run in the WhatsApp Web F12 console)
+// Wisp — selector dump (run in the WhatsApp Web F12 console)
 // Paste this into DevTools Console on web.whatsapp.com. A small panel appears.
 // Choose a category, make sure "Capture on click" is ON, then click a representative
 // element in WhatsApp (e.g. one avatar, one name, one message bubble, one sticker...).

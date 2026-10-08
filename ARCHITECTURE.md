@@ -1,4 +1,4 @@
-# Architecture — WhatsApp Fast
+# Architecture — Wisp
 
 ## Overview
 A **native Windows desktop application** that hosts the **official WhatsApp Web** client

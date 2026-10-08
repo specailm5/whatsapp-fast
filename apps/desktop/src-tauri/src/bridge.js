@@ -1,4 +1,4 @@
-/* WhatsApp Fast — shared Tauri IPC bridge helper.
+/* Wisp — shared Tauri IPC bridge helper.
  *
  * Injected at document-start on web.whatsapp.com (before the scripts that use it).
  * Resolves the Tauri `invoke` bridge lazily — it may not exist yet at document-start —
