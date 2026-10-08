@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="WhatsApp Fast">
+  <title>WhatsApp Fast</title>
+  <!-- App / tile icon: full-bleed green tile with the white bubble+bolt. -->
+  <rect width="1024" height="1024" rx="230" fill="#1DAA61"/>
+  <g transform="scale(4)">
+    <path fill="#FFFFFF" fill-rule="evenodd" d="
+      M 92 44
+      H 164
+      A 40 40 0 0 1 204 84
+      V 136
+      A 40 40 0 0 1 164 176
+      H 138
+      L 100 214
+      L 105 176
+      H 92
+      A 40 40 0 0 1 52 136
+      V 84
+      A 40 40 0 0 1 92 44
+      Z
+      M 132 60
+      L 98 124
+      L 121 124
+      L 108 158
+      L 156 94
+      L 133 94
+      Z
+    "/>
+  </g>
+</svg>

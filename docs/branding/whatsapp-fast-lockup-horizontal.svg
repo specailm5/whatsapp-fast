@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 256" width="960" height="256" role="img" aria-label="WhatsApp Fast">
+  <title>WhatsApp Fast</title>
+  <!-- Horizontal lockup. NOTE: the wordmark is a provisional system-sans placeholder
+       (the symbol is production-ready; the wordmark must be set/outlined in the licensed
+       brand typeface before release). -->
+  <g transform="translate(12,26) scale(0.8)">
+    <path fill="#1DAA61" fill-rule="evenodd" d="
+      M 92 44 H 164 A 40 40 0 0 1 204 84 V 136 A 40 40 0 0 1 164 176
+      H 138 L 100 214 L 105 176 H 92
+      A 40 40 0 0 1 52 136 V 84 A 40 40 0 0 1 92 44 Z
+      M 132 60 L 98 124 L 121 124 L 108 158 L 156 94 L 133 94 Z"/>
+  </g>
+  <text x="252" y="158" font-family="Segoe UI, Arial, sans-serif" font-size="78" font-weight="500" fill="#0B1319">WhatsApp <tspan font-weight="800" fill="#1DAA61">Fast</tspan></text>
+</svg>

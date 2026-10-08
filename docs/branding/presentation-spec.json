@@ -1,0 +1,37 @@
+{
+  "brand": "WhatsApp Fast",
+  "tagline": "The fast way to WhatsApp Web.",
+  "brief": "A fast, low-memory native Windows shell that hosts the official WhatsApp Web client. It should feel fast, native, lightweight and private, and read instantly as messaging without copying WhatsApp's own handset-in-a-bubble.",
+  "adjectives": ["fast", "native", "lightweight", "private", "trustworthy"],
+  "criteria": "Success: reads as messaging + speed in one glance, survives a 16 px favicon, works in one colour, and is clearly not the WhatsApp / Telegram / Signal mark.",
+  "industry": "consumer-app",
+  "nav": ["Download", "Privacy", "Docs"],
+  "brand_color": "#1DAA61",
+  "tile_color": "#1DAA61",
+  "greyscale": false,
+  "final": true,
+  "round": 1,
+  "concepts": [
+    {
+      "name": "Bolt Bubble",
+      "symbol": "whatsapp-fast-symbol.svg",
+      "lockup": "whatsapp-fast-lockup-horizontal.svg",
+      "stacked": "whatsapp-fast-lockup-stacked.svg",
+      "symbol_on_tile": "whatsapp-fast-app-icon.svg",
+      "lockup_on_dark": "exports/whatsapp-fast-lockup-horizontal-white.svg",
+      "idea": "A speech bubble with a lightning bolt knocked out of it — fast chat in one form.",
+      "rationale": [
+        "Messaging (bubble) + speed (bolt) in a single, readable silhouette.",
+        "The bolt is real negative space, so the mark stays bold down to 16 px.",
+        "Distinct from WhatsApp's handset, Telegram's plane and Signal's bubble.",
+        "Green keeps the category cue and matches the app's existing accent."
+      ]
+    }
+  ],
+  "recommendation": "Bolt Bubble — the clearest read of the two core ideas, the strongest at small sizes, and the easiest to extend into an icon set.",
+  "next_steps": [
+    "Apply the mark across the app icon set and in-app surfaces",
+    "Set and outline the final wordmark typeface",
+    "Trademark check on the product name before public release"
+  ]
+}
