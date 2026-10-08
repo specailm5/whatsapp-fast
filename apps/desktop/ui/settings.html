@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhatsApp Fast — Settings</title>
+  <style>
+    /* WhatsApp Fast settings — a separate full-page view styled to WhatsApp Web's
+       design system (surfaces, muted text, brand green per the reference CSS). */
+    :root {
+      --wfa-bg: #111b21;          /* --background-default-rgb */
+      --wfa-surface: #202c33;     /* --background-elevated */
+      --wfa-text: #d1d7db;        /* --text-primary */
+      --wfa-muted: #8696a0;       /* --text-muted */
+      --wfa-divider: rgba(134,150,160,.16);
+      --wfa-accent: #1DAA61;      /* WhatsApp brand green */
+      --wfa-accent-contrast: #0b1319;
+      --wfa-danger: #f15c6d;      /* --danger-rgb */
+      --wfa-radius: 12px;
+      --wfa-font: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: var(--wfa-font);
+      background: var(--wfa-bg); color: var(--wfa-text);
+      font-size: 14px; line-height: 1.45;
+      overflow-y: auto; -webkit-font-smoothing: antialiased;
+    }
+
+    /* header */
+    .hdr { position: sticky; top: 0; z-index: 5; background: var(--wfa-bg); border-bottom: 1px solid var(--wfa-divider); }
+    .hdr-in { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 10px; padding: 16px 20px; }
+    .hdr h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: .1px; }
+
+    /* centered content column */
+    .main { max-width: 640px; margin: 0 auto; width: 100%; padding: 4px 0 48px; }
+
+    .sec { padding: 4px 0; }
+    .sec-title {
+      padding: 20px 16px 6px; font-size: 12px; font-weight: 600;
+      letter-spacing: .5px; text-transform: uppercase; color: var(--wfa-muted);
+    }
+    .sec-title:first-child { padding-top: 12px; }
+
+    /* list rows */
+    .list { display: flex; flex-direction: column; }
+    .row {
+      display: flex; align-items: center; gap: 16px;
+      width: 100%; min-height: 58px; padding: 10px 16px;
+      background: transparent; border: none; cursor: pointer; color: inherit;
+      text-align: left; border-top: 1px solid var(--wfa-divider);
+    }
+    .list .row:nth-child(1) { border-top: none; }
+    .row:hover { background: var(--wfa-surface); }
+    .row .cell { flex: 1; min-width: 0; }
+    .row .t { font-weight: 500; font-size: 14px; }
+    .row .s { font-size: 12.5px; color: var(--wfa-muted); margin-top: 2px; }
+    .row button, .row .btn, .row input { flex: none; }
+
+    /* toggle pill */
+    .switch { flex: none; position: relative; width: 40px; height: 22px; border-radius: 999px;
+      background: var(--wfa-muted); cursor: pointer; transition: background .15s ease; }
+    .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+      border-radius: 50%; background: var(--wfa-bg); transition: transform .15s ease; }
+    .switch.on { background: var(--wfa-accent); }
+    .switch.on::after { transform: translateX(18px); }
+
+    /* button */
+    .btn { display: inline-flex; align-items: center; justify-content: center; height: 34px;
+      padding: 0 14px; border-radius: var(--wfa-radius); font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 1px solid rgba(0,0,0,0); transition: filter .12s ease; }
+    .btn:active { filter: brightness(.94); }
+    .btn.secondary { background: var(--wfa-surface); border-color: var(--wfa-divider); color: var(--wfa-text); }
+    .btn.ghost { background: transparent; color: var(--wfa-danger); padding-left: 0; }
+    .btn.sm { height: 28px; padding: 0 10px; font-size: 12px; }
+
+    /* shortcut chip */
+    .chip { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: var(--wfa-radius);
+      border: 1px solid var(--wfa-divider); background: var(--wfa-surface);
+      font-size: 12px; font-weight: 500; color: var(--wfa-text); }
+
+    /* input + select */
+    .field { height: 34px; padding: 0 11px; border-radius: 8px; border: 1px solid var(--wfa-divider);
+      background: var(--wfa-surface); color: var(--wfa-text); font-size: 12.5px; font-family: inherit; outline: none; }
+    .field:focus { border-color: var(--wfa-accent); }
+    select.field { width: auto; }
+    input[type=password].field { width: 128px; }
+
+    /* category grid */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; padding: 4px 16px 8px; }
+    .cat { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      height: 36px; padding: 0 10px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+    .cat:hover { background: var(--wfa-surface); }
+    .cat .switch { width: 32px; height: 18px; }
+    .cat .switch::after { width: 14px; height: 14px; }
+    .cat .switch.on::after { transform: translateX(14px); }
+
+    .meta { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; padding: 12px 16px 6px; }
+    .meta > span { font-size: 13px; }
+    .range { width: 140px; accent-color: var(--wfa-accent); }
+    .status { min-height: 16px; font-size: 12px; color: var(--wfa-accent); padding: 8px 16px 0; }
+    .status.err { color: var(--wfa-danger); }
+    .slab { opacity: 1; transition: opacity .2s ease; }
+    .slab.off { opacity: .45; pointer-events: none; }
+
+    /* Rows built on <button> so they are keyboard-focusable; the class supplies the
+       layout, so reset the browser's default button chrome. */
+    button.meta, button.cat {
+      font: inherit; color: inherit; background: transparent; border: 1px solid transparent;
+      text-align: left; width: 100%; cursor: pointer;
+    }
+    .row:focus-visible, button.meta:focus-visible, button.cat:focus-visible {
+      outline: 2px solid var(--wfa-accent); outline-offset: -2px;
+    }
+
+    /* key recorder modal */
+    .key-modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center;
+      justify-content: center; background: rgba(0,0,0,.55); }
+    .key-modal[hidden] { display: none; }
+    .key-box { background: var(--wfa-surface); border: 1px solid var(--wfa-divider);
+      border-radius: 16px; padding: 28px 32px; text-align: center; min-width: 280px;
+      box-shadow: 0 18px 48px rgba(0,0,0,.5); }
+    .key-title { font-size: 13px; color: var(--wfa-muted); margin-bottom: 12px; }
+    .key-display { font-size: 26px; font-weight: 600; color: var(--wfa-accent); min-height: 34px;
+      letter-spacing: .5px; margin-bottom: 12px; }
+    .key-hint { font-size: 12px; color: var(--wfa-muted); }
+  </style>
+</head>
+<body>
+  <header class="hdr"><div class="hdr-in"><h1>Settings</h1></div></header>
+  <main class="main">
+
+    <section class="sec">
+      <div class="sec-title">General</div>
+      <div class="list">
+        <button class="row" id="autostart">
+          <div class="cell"><div class="t">Launch at startup</div><div class="s">Start with Windows</div></div>
+          <span class="switch" role="switch" aria-checked="false"></span>
+        </button>
+        <button class="row" id="unreadBadge">
+          <div class="cell"><div class="t">Unread badge</div><div class="s">Show a count on the taskbar</div></div>
+          <span class="switch" role="switch" aria-checked="false"></span>
+        </button>
+        <button class="row" id="flashNew">
+          <div class="cell"><div class="t">Flash on new message</div><div class="s">When the window is in the background</div></div>
+          <span class="switch" role="switch" aria-checked="false"></span>
+        </button>
+        <button class="row" id="closeToTray">
+          <div class="cell"><div class="t">Close to tray</div><div class="s">Keep running when the window is closed</div></div>
+          <span class="switch" role="switch" aria-checked="true"></span>
+        </button>
+        <button class="row" id="startMinimized">
+          <div class="cell"><div class="t">Start minimized</div><div class="s">Launch without opening a window</div></div>
+          <span class="switch" role="switch" aria-checked="false"></span>
+        </button>
+        <button class="row" id="hotkey">
+          <div class="cell"><div class="t">Summon shortcut</div><div class="s">Open from anywhere</div></div>
+          <span class="chip" id="hotkeyChip"></span>
+        </button>
+        <button class="row" id="blurHotkey">
+          <div class="cell"><div class="t">Privacy shortcut</div><div class="s">Blur or reveal</div></div>
+          <span class="chip" id="blurHotkeyChip"></span>
+        </button>
+        <button class="row" id="panicHotkey">
+          <div class="cell"><div class="t">Panic shortcut</div><div class="s">Hide all chats</div></div>
+          <span class="chip" id="panicHotkeyChip"></span>
+        </button>
+        <div class="row">
+          <div class="cell"><div class="t">Reset window</div><div class="s">Restore default size</div></div>
+          <button class="btn secondary sm" id="resetView">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-title">Privacy</div>
+      <div class="list">
+        <button class="row" id="privacyEnabled">
+          <div class="cell"><div class="t">Privacy blur</div><div class="s">Hide names, photos &amp; text</div></div>
+          <span class="switch" role="switch" aria-checked="false"></span>
+        </button>
+      </div>
+      <div class="slab" id="privacyBody">
+        <div class="meta"><span>Blur strength</span><input type="range" id="privacyBlur" class="range" min="4" max="30" value="10" /></div>
+        <button class="meta" type="button" id="hoverReveal" role="switch" aria-checked="true"><span>Reveal on hover</span><span class="switch" aria-hidden="true"></span></button>
+        <button class="meta" type="button" id="autoHide" role="switch" aria-checked="false"><span>Auto-hide on focus loss</span><span class="switch" aria-hidden="true"></span></button>
+        <div class="meta"><span>Hide</span></div>
+        <div class="grid" id="catGrid"></div>
+        <div class="meta"><span>Notifications</span>
+          <select id="notifMode" class="field">
+            <option value="">Show</option><option value="redact">Redact</option><option value="suppress">Silent</option>
+          </select>
+        </div>
+        <div class="meta" style="display:flex"><button class="btn secondary sm" id="testToggle">Blur test</button></div>
+        <div class="status" id="statusPrivacy" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-title">Security</div>
+      <div class="list">
+        <div class="row">
+          <div class="cell"><div class="t">Panic PIN</div><div class="s" id="panicPinHint">Empty = no lock</div></div>
+          <input type="password" id="panicPin" class="field" placeholder="4-digit PIN" autocomplete="off" />
+          <button class="btn secondary sm" id="panicPinSet">Set</button>
+          <button class="btn secondary sm" id="panicPinClear">Clear</button>
+        </div>
+        <div class="row">
+          <div class="cell"><div class="t">Panic mode</div><div class="s">Hide all chats instantly</div></div>
+          <button class="btn secondary sm" id="testPanic">Test</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-title">App</div>
+      <div class="list">
+        <button class="row" id="quit">
+          <div class="cell"><div class="t" style="color:var(--wfa-danger)">Quit WhatsApp</div></div>
+        </button>
+      </div>
+    </section>
+
+    <div class="status" id="globalStatus" role="status" aria-live="polite"></div>
+  </main>
+
+  <div class="key-modal" id="keyModal" hidden>
+    <div class="key-box">
+      <div class="key-title">Press a shortcut</div>
+      <div class="key-display" id="keyDisplay">…</div>
+      <div class="key-hint">Esc cancels</div>
+    </div>
+  </div>
+
+  <script>
+    const { invoke } = window.__TAURI__.core;
+    const CATS = [
+      ['contactName','Names'],['chatMessages','Messages'],['lastMessage','Previews'],['media','Media'],
+      ['profilePic','Photos'],['voiceNotes','Voice'],['stickers','Stickers'],['status','Status'],
+      ['reactions','Reactions'],['searchbar','Search'],['communities','Communities'],['contactInfo','Contact info'],
+      ['composeBar','Composer']
+    ];
+
+    const pinState = { hash: '', salt: '', len: 0, digitsOnly: false };
+
+    function $id(id){ return document.getElementById(id); }
+    function setSwitch(row, on){
+      const s = row && row.querySelector('.switch');
+      if (s) { s.classList.toggle('on', !!on); s.setAttribute('aria-checked', on?'true':'false'); }
+      // Rows that are themselves the switch (role="switch" on a <button>) carry the state.
+      if (row && row.getAttribute && row.getAttribute('role') === 'switch') row.setAttribute('aria-checked', on?'true':'false');
+    }
+    function switchOn(row){ const s = row && row.querySelector('.switch'); return !!(s && s.classList.contains('on')); }
+
+    async function refresh() {
+      try {
+        const s = await invoke('settings_get');
+        $id('hotkeyChip').textContent = s.hotkey || 'Not set';
+        $id('blurHotkeyChip').textContent = s.blur_hotkey || 'Not set';
+        $id('panicHotkeyChip').textContent = s.panic_hotkey || 'Not set';
+        setSwitch($id('autostart'), !!s.autostart);
+        setSwitch($id('unreadBadge'), !!s.unread_badge);
+        setSwitch($id('flashNew'), !!s.flash_on_new_message);
+        setSwitch($id('closeToTray'), s.close_to_tray !== false);
+        setSwitch($id('startMinimized'), !!s.start_minimized);
+      } catch (e) { status('globalStatus', 'Failed to load settings', true); }
+      try {
+        const p = await invoke('privacy_get');
+        setSwitch($id('privacyEnabled'), !!p.enabled);
+        $id('privacyBlur').value = p.blur != null ? p.blur : 10;
+        $id('notifMode').value = p.notif || '';
+        $id('panicPin').value = '';
+        pinState.hash = p.panic_pin || '';
+        pinState.salt = p.pin_salt || '';
+        pinState.len = p.pin_len || 0;
+        pinState.digitsOnly = !!p.pin_digits_only;
+        // Migrate a pre-hash plaintext PIN (written before pin_salt existed) once.
+        if (pinState.hash && !pinState.salt) { await migrateLegacyPin(pinState.hash); }
+        else { updatePinHint(); }
+        const c = p.categories || {};
+        document.querySelectorAll('.cat').forEach(el => {
+          setSwitch(el, c[el.dataset.cat] !== false);
+        });
+        setSlab(!!p.enabled);
+        setSwitch($id('hoverReveal'), p.hover_reveal !== false);
+        setSwitch($id('autoHide'), !!p.auto_hide_on_focus_loss);
+      } catch (e) { status('statusPrivacy', 'Failed to load privacy', true); }
+    }
+
+    function buildCats() {
+      const grid = $id('catGrid');
+      CATS.forEach(cat => {
+        // A real <button role="switch"> so the category toggles are keyboard/AT operable.
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'cat'; btn.dataset.cat = cat[0];
+        btn.setAttribute('role', 'switch'); btn.setAttribute('aria-checked', 'true');
+        const span = document.createElement('span'); span.textContent = cat[1];
+        const sw = document.createElement('span'); sw.className = 'switch'; sw.setAttribute('aria-hidden', 'true');
+        btn.appendChild(span); btn.appendChild(sw);
+        btn.addEventListener('click', () => { setSwitch(btn, !switchOn(btn)); savePrivacy(); });
+        grid.appendChild(btn);
+      });
+    }
+
+    function setSlab(on) {
+      const body = $id('privacyBody');
+      body.classList.toggle('off', !on);
+    }
+
+    function collectPrivacy() {
+      const cats = {};
+      document.querySelectorAll('.cat').forEach(el => { cats[el.dataset.cat] = el.querySelector('.switch').classList.contains('on'); });
+      return {
+        enabled: switchOn($id('privacyEnabled')),
+        blur: parseInt($id('privacyBlur').value, 10) || 10,
+        categories: cats,
+        notif: $id('notifMode').value,
+        panic_pin: pinState.hash,
+        pin_salt: pinState.salt,
+        pin_len: pinState.len,
+        pin_digits_only: pinState.digitsOnly,
+        hover_reveal: switchOn($id('hoverReveal')),
+        auto_hide_on_focus_loss: switchOn($id('autoHide'))
+      };
+    }
+
+    async function savePrivacy() {
+      try { await invoke('privacy_set', { config: collectPrivacy() }); status('statusPrivacy','Saved'); }
+      catch (e) { status('statusPrivacy','Save failed', true); }
+    }
+    function debounce(fn, ms) {
+      let t = null;
+      return function () { const a = arguments, s = this; clearTimeout(t); t = setTimeout(() => { fn.apply(s, a); }, ms || 150); };
+    }
+    const savePrivacyDebounced = debounce(savePrivacy, 150);
+
+    function status(id, msg, err) {
+      const el = $id(id); if (!el) return;
+      el.textContent = msg || ''; el.className = 'status' + (err ? ' err' : '');
+    }
+
+    // ---- panic PIN (stored as a salted SHA-256 hash, never plaintext) ----
+    function randSaltHex() {
+      const a = new Uint8Array(16);
+      window.crypto.getRandomValues(a);
+      let h = '';
+      for (let i = 0; i < a.length; i++) h += ('0' + a[i].toString(16)).slice(-2);
+      return h;
+    }
+    async function sha256Hex(str) {
+      if (!window.crypto || !window.crypto.subtle || !window.crypto.subtle.digest) throw new Error('WebCrypto unavailable');
+      const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      const arr = new Uint8Array(buf);
+      let h = '';
+      for (let i = 0; i < arr.length; i++) h += ('0' + arr[i].toString(16)).slice(-2);
+      return h;
+    }
+    function updatePinHint() {
+      const has = !!(pinState.hash && pinState.salt);
+      const hint = $id('panicPinHint');
+      if (hint) hint.textContent = has ? 'PIN set (4 digits) — enter a new one to change, or Clear' : 'Empty = no lock';
+      const clear = $id('panicPinClear');
+      if (clear) clear.style.display = has ? '' : 'none';
+    }
+    async function migrateLegacyPin(plaintext) {
+      try {
+        const salt = randSaltHex();
+        const hash = await sha256Hex(salt + plaintext);
+        pinState.hash = hash;
+        pinState.salt = salt;
+        pinState.len = (plaintext || '').length;
+        pinState.digitsOnly = /^[0-9]+$/.test(plaintext || '');
+        await invoke('privacy_set', { config: collectPrivacy() });
+      } catch (_e) {}
+      updatePinHint();
+    }
+
+    // ---- wiring ----
+    $id('autostart').addEventListener('click', async () => {
+      const on = switchOn($id('autostart')); setSwitch($id('autostart'), !on);
+      try { await invoke('settings_set_autostart', { enabled: !on }); status('globalStatus', !on ? 'Starts with Windows' : 'Startup off'); }
+      catch (e) { status('globalStatus','Startup failed', true); setSwitch($id('autostart'), on); }
+    });
+    $id('unreadBadge').addEventListener('click', async () => {
+      const on = switchOn($id('unreadBadge')); setSwitch($id('unreadBadge'), !on);
+      try { await invoke('settings_set_unread_badge', { enabled: !on }); status('globalStatus', !on ? 'Unread badge on' : 'Unread badge off'); }
+      catch (e) { status('globalStatus','Badge failed', true); setSwitch($id('unreadBadge'), on); }
+    });
+    $id('flashNew').addEventListener('click', async () => {
+      const on = switchOn($id('flashNew')); setSwitch($id('flashNew'), !on);
+      try { await invoke('settings_set_flash', { enabled: !on }); status('globalStatus', !on ? 'Flash on' : 'Flash off'); }
+      catch (e) { status('globalStatus','Flash failed', true); setSwitch($id('flashNew'), on); }
+    });
+    $id('closeToTray').addEventListener('click', async () => {
+      const on = switchOn($id('closeToTray')); setSwitch($id('closeToTray'), !on);
+      try { await invoke('settings_set_close_to_tray', { enabled: !on }); status('globalStatus', !on ? 'Close to tray on' : 'Close to tray off'); }
+      catch (e) { status('globalStatus','Failed', true); setSwitch($id('closeToTray'), on); }
+    });
+    $id('startMinimized').addEventListener('click', async () => {
+      const on = switchOn($id('startMinimized')); setSwitch($id('startMinimized'), !on);
+      try { await invoke('settings_set_start_minimized', { enabled: !on }); status('globalStatus', !on ? 'Start minimized on' : 'Start minimized off'); }
+      catch (e) { status('globalStatus','Failed', true); setSwitch($id('startMinimized'), on); }
+    });
+    $id('privacyEnabled').addEventListener('click', () => {
+      const on = switchOn($id('privacyEnabled')); setSwitch($id('privacyEnabled'), !on); setSlab(!on); savePrivacy();
+    });
+    $id('privacyBlur').addEventListener('input', savePrivacyDebounced);
+    $id('hoverReveal').addEventListener('click', () => { const on = switchOn($id('hoverReveal')); setSwitch($id('hoverReveal'), !on); savePrivacy(); });
+    $id('autoHide').addEventListener('click', () => { const on = switchOn($id('autoHide')); setSwitch($id('autoHide'), !on); savePrivacy(); });
+    $id('notifMode').addEventListener('change', savePrivacy);
+    $id('panicPinSet').addEventListener('click', async () => {
+      const v = $id('panicPin').value.trim();
+      if (!/^[0-9]{4}$/.test(v)) { status('globalStatus', 'PIN must be 4 digits'); return; }
+      try {
+        const salt = randSaltHex();
+        const hash = await sha256Hex(salt + v);
+        pinState.hash = hash;
+        pinState.salt = salt;
+        pinState.len = 4;
+        pinState.digitsOnly = true;
+        $id('panicPin').value = '';
+        await invoke('privacy_set', { config: collectPrivacy() });
+        status('globalStatus', 'Panic PIN set');
+        updatePinHint();
+      } catch (e) { status('globalStatus', 'PIN set failed', true); }
+    });
+    $id('panicPinClear').addEventListener('click', async () => {
+      try {
+        pinState.hash = '';
+        pinState.salt = '';
+        pinState.len = 0;
+        pinState.digitsOnly = false;
+        $id('panicPin').value = '';
+        await invoke('privacy_set', { config: collectPrivacy() });
+        status('globalStatus', 'Panic PIN cleared');
+        updatePinHint();
+      } catch (e) { status('globalStatus', 'PIN clear failed', true); }
+    });
+    $id('testPanic').addEventListener('click', async () => {
+      try { await invoke('panic_toggle'); status('globalStatus','Panic toggled'); }
+      catch (e) { status('globalStatus','Panic failed', true); }
+    });
+    $id('testToggle').addEventListener('click', async () => {
+      try { await invoke('privacy_toggle_all'); status('statusPrivacy','Blur test toggled'); }
+      catch (e) { status('statusPrivacy','Toggle failed', true); }
+    });
+    $id('resetView').addEventListener('click', async () => {
+      try { await invoke('settings_reset_view'); status('globalStatus','Window reset'); }
+      catch (e) { status('globalStatus','Reset failed', true); }
+    });
+    $id('quit').addEventListener('click', async () => { try { await invoke('quit_app'); } catch (_) {} });
+
+    // ---- key recorder ----
+    const modal = $id('keyModal'), display = $id('keyDisplay');
+    let recorder = null;
+    function keyToName(e){
+      const c = e.code || '';
+      if (/^Key[A-Z]$/.test(c)) return c.slice(3);
+      if (/^Digit[0-9]$/.test(c)) return c.slice(5);
+      const map = { Space:'Space',Enter:'Enter',Tab:'Tab',Backspace:'Backspace',Delete:'Delete',Home:'Home',End:'End',
+        PageUp:'PageUp',PageDown:'PageDown',ArrowUp:'Up',ArrowDown:'Down',ArrowLeft:'Left',ArrowRight:'Right',
+        F1:'F1',F2:'F2',F3:'F3',F4:'F4',F5:'F5',F6:'F6',F7:'F7',F8:'F8',F9:'F9',F10:'F10',F11:'F11',F12:'F12',
+        Comma:',',Period:'.',Semicolon:';',Slash:'/',Minus:'-',Equal:'=',BracketLeft:'[',BracketRight:']' };
+      return map[c] || null;
+    }
+    function combo(e){ const p=[]; if(e.ctrlKey)p.push('Ctrl'); if(e.shiftKey)p.push('Shift'); if(e.altKey)p.push('Alt'); if(e.metaKey)p.push('Cmd'); const k=keyToName(e); if(!k)return null; p.push(k); return p.join('+'); }
+    function preview(e){ const p=[]; if(e.ctrlKey)p.push('Ctrl'); if(e.shiftKey)p.push('Shift'); if(e.altKey)p.push('Alt'); if(e.metaKey)p.push('Cmd'); const k=keyToName(e); if(k)p.push(k); return p.length?p.join('+'):''; }
+    function onKey(e){ e.preventDefault(); e.stopPropagation(); if(e.key==='Escape'){ closeRecorder(); return; } const c=combo(e); if(!c){ display.textContent='…'; return; } display.textContent=c; const rec=recorder; invoke(rec.invoke, {hotkey:c}).then(()=>{ document.getElementById(rec.chip).textContent=c; status('globalStatus', rec.ok); closeRecorder(); }).catch(()=>{ status('globalStatus','Invalid or unavailable shortcut', true); closeRecorder(); }); }
+    function onPrev(e){ e.preventDefault(); e.stopPropagation(); display.textContent = preview(e) || '…'; }
+    function openRecorder(rec){ recorder=rec; modal.hidden=false; display.textContent='…'; window.addEventListener('keydown', onKey, true); window.addEventListener('keyup', onPrev, true); }
+    function closeRecorder(){ window.removeEventListener('keydown', onKey, true); window.removeEventListener('keyup', onPrev, true); modal.hidden=true; recorder=null; }
+    function attach(rowId, chipId, invokeName, ok){ $id(rowId).addEventListener('click', () => openRecorder({ invoke:invokeName, ok:ok, chip:chipId })); }
+    attach('hotkey','hotkeyChip','settings_set_hotkey','Summon shortcut saved');
+    attach('blurHotkey','blurHotkeyChip','settings_set_blur_hotkey','Privacy shortcut saved');
+    attach('panicHotkey','panicHotkeyChip','settings_set_panic_hotkey','Panic shortcut saved');
+
+    buildCats();
+    refresh();
+  </script>
+</body>
+</html>

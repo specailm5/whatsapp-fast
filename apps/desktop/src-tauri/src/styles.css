@@ -1,0 +1,1019 @@
+/* =============================================================================
+ * styles.css — Privacy Suite Extension for WhatsApp Web — DEFAULT-BLUR ENGINE
+ * -----------------------------------------------------------------------------
+ * ZERO-DELAY ARCHITECTURE (fixes the "chat opens unblurred then blurs" flash):
+ *
+ *   The blur is the DEFAULT state, expressed entirely in this stylesheet. CSS
+ *   applies the instant an element paints — including elements that don't exist
+ *   yet when the page loads — so a newly opened chat is blurred on its FIRST
+ *   frame. There is NO JavaScript in the blur path, therefore no render→wait→
+ *   blur delay.
+ *
+ *   JavaScript's ONLY job is to put a few classes / one variable on the <html>
+ *   root that REVEAL categories the user disabled and tune behaviour:
+ *
+ *     html.wa-ready             → engine initialised.
+ *     html.wa-off               → master switch OFF → reveal everything.
+ *     html.wa-show-<category>   → that category is DISABLED → reveal it.
+ *     html.wa-no-hover          → "reveal on hover" turned OFF → hover never reveals.
+ *     html style="--wa-scale-<category>:N" → per-category blur-intensity multiplier.
+ *
+ * -----------------------------------------------------------------------------
+ * SELECTOR PROVENANCE (this is the fix for "nothing blurs"):
+ *
+ *   The previous selector set targeted data-testid hooks that DO NOT EXIST in the
+ *   current (2026) WhatsApp build — e.g. `conversation-panel-messages`,
+ *   `image-thumb`, `default-group-refreshed`, `sticker`, `compose-box`. Because
+ *   the whole in-chat blur was scoped under the non-existent
+ *   `conversation-panel-messages`, nothing in an open chat blurred at all.
+ *
+ *   Every selector below was re-verified against a LIVE saved DOM. The durable,
+ *   present-in-build hooks are: `msg-container`, `selectable-text`, `author`,
+ *   `cell-frame-container`, `cell-frame-title`, `cell-frame-secondary`,
+ *   `media-canvas`, `media-canvas-img`, `media-url-provider`, `sticker-container`,
+ *   `ptt-status`, `._ak4g` / `._ak4n`, `lexical-rich-text-input`, `drawer-right`,
+ *   `community-tab-*-cell`, `status-thumbnail`. Selectors that ever stop matching
+ *   simply do nothing (PRD §6-1, fail silently).
+ *
+ * STRICT RULES (PRD §I-3): blur is pure CSS `filter: blur()`; reveal-on-hover is
+ * pure CSS; no JS mouseover. `!important` beats WhatsApp's inline styles.
+ *
+ * HOVER MODEL: INSTANT, PER-LEAF reveal. Every blur rule uses `transition: filter
+ * 0s`; every reveal/hover rule pins `transition-delay: 0s`. Hover reveal fires from
+ * the BLURRED LEAF itself (the text span, the name cell, the avatar img) rather than
+ * its row/bubble container — so hovering the message text reveals ONLY the text, not
+ * the sender name, avatar, or reactions in the same bubble. (A blurred multi-part
+ * unit that is one logical surface — a media tile, sticker, status thumbnail, voice
+ * note, compose bar — still reveals as a whole, because it IS the leaf.) Every :hover
+ * rule is gated behind `html:not(.wa-no-hover)` so the popup can switch hover-reveal
+ * off entirely.
+ * ===========================================================================*/
+
+/* -----------------------------------------------------------------------------
+ * Blur amounts as CSS variables. Each is multiplied by its category's own scale
+ * (--wa-scale-<category>, default 1, written on <html> by privacy_boot.js from that
+ * category's popup slider) so every category's intensity tunes independently
+ * with zero flash. The `, 1` fallback keeps the default blur rendering before
+ * privacy_boot.js has written any scale (first-paint, zero-flash).
+ * --------------------------------------------------------------------------- */
+:root {
+  --wa-nm-blur: calc(5px * var(--wa-scale-contactName, 1));
+  /* contact names            */
+  --wa-ms-blur: calc(8px * var(--wa-scale-chatMessages, 1));
+  /* chat message text        */
+  --wa-msp-blur: calc(8px * var(--wa-scale-lastMessage, 1));
+  /* last-message preview     */
+  --wa-mdp-blur: calc(20px * var(--wa-scale-media, 1));
+  /* inline media preview     */
+  --wa-pp-blur: calc(8px * var(--wa-scale-profilePic, 1));
+  /* profile pics             */
+  --wa-pp-lg-blur: calc(14px * var(--wa-scale-profilePic, 1));
+  /* large profile pics       */
+  --wa-vn-blur: calc(10px * var(--wa-scale-voiceNotes, 1));
+  /* voice notes              */
+  --wa-st-blur: calc(18px * var(--wa-scale-stickers, 1));
+  /* stickers                 */
+  --wa-cb-blur: calc(6px * var(--wa-scale-composeBar, 1));
+  /* compose bar              */
+  --wa-stt-blur: calc(16px * var(--wa-scale-status, 1));
+  /* status thumbnails        */
+  --wa-rx-blur: calc(6px * var(--wa-scale-reactions, 1));
+  /* reactions (best-effort)  */
+  --wa-search-blur: calc(6px * var(--wa-scale-searchbar, 1));
+  /* search bar               */
+  --wa-comm-blur: calc(5px * var(--wa-scale-communities, 1));
+  /* community names (split from --wa-nm-blur so it scales independently) */
+  --wa-ci-blur: calc(8px * var(--wa-scale-contactInfo, 1));
+  /* contact-info drawer (split from --wa-pp-blur so it scales independently) */
+}
+
+/* =============================================================================
+ * FIREFOX BLUR CAPS
+ * Gecko renders filter:blur() on the CPU for large radii — performance degrades
+ * quadratically with radius. These caps keep blur visually effective while
+ * staying within the range Firefox can composite on the GPU (~8px threshold).
+ * The per-category strength sliders still work; caps only prevent extremes.
+ * ===========================================================================*/
+html.wa-ff {
+  --wa-nm-blur: min(calc(5px * var(--wa-scale-contactName, 1)), 4px);
+  --wa-ms-blur: min(calc(8px * var(--wa-scale-chatMessages, 1)), 6px);
+  --wa-msp-blur: min(calc(8px * var(--wa-scale-lastMessage, 1)), 6px);
+  --wa-mdp-blur: min(calc(20px * var(--wa-scale-media, 1)), 10px);
+  --wa-pp-blur: min(calc(8px * var(--wa-scale-profilePic, 1)), 6px);
+  --wa-pp-lg-blur: min(calc(14px * var(--wa-scale-profilePic, 1)), 8px);
+  --wa-vn-blur: min(calc(10px * var(--wa-scale-voiceNotes, 1)), 7px);
+  --wa-st-blur: min(calc(18px * var(--wa-scale-stickers, 1)), 9px);
+  --wa-cb-blur: min(calc(6px * var(--wa-scale-composeBar, 1)), 5px);
+  --wa-stt-blur: min(calc(16px * var(--wa-scale-status, 1)), 9px);
+  --wa-rx-blur: min(calc(6px * var(--wa-scale-reactions, 1)), 4px);
+  --wa-search-blur: min(calc(6px * var(--wa-scale-searchbar, 1)), 4px);
+  --wa-comm-blur: min(calc(5px * var(--wa-scale-communities, 1)), 4px);
+  --wa-ci-blur: min(calc(8px * var(--wa-scale-contactInfo, 1)), 6px);
+}
+
+/* =============================================================================
+ * GPU PROMOTION — force compositing layers on all blurred elements so hover
+ * transitions (filter: blur → none) happen on the GPU rather than triggering
+ * a CPU repaint. Particularly effective in Firefox where filter: blur() is
+ * not automatically promoted to its own layer.
+ * ===========================================================================*/
+[data-testid="cell-frame-title"]:not(:where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) *),
+#main header span[title],
+[data-testid="conversation-info-header-chat-title"],
+[data-testid="recent-search-item"] span[title],
+[data-testid="author"],
+[testid="author"],
+[data-testid="group-info-top-card-subtitle"],
+[data-testid="cell-frame-container"] span._ao3e[dir="auto"],
+[data-testid="drawer-right"] span._ao3e,
+#main header span._ao3e[dir="auto"],
+[data-testid="msg-container"] span._ao3e[dir="auto"],
+[data-testid="cell-frame-container"] img,
+#main header img,
+[data-testid="group-chat-profile-picture"] img,
+[data-testid="group-chat-profile-picture"] [data-testid="profile-first-initial"],
+[data-testid="group-chat-profile-picture"] [data-testid="profile-second-initial"],
+[data-testid="recent-search-item"] img,
+[data-testid="recent-search-item"] [data-testid="default-contact-refreshed"],
+._ak4n img,
+[data-testid="cell-frame-secondary"] span,
+[data-testid="msg-container"] [data-testid~="selectable-text"],
+[data-testid="msg-container"] [data-testid~="selectable-text"] img.emoji,
+[data-testid="msg-container"] [data-testid~="selectable-text"] img[data-plain-text],
+[data-testid="link-preview-title"],
+[data-testid="url-element"],
+[data-testid="quoted-message"] [data-testid~="selectable-text"],
+[data-testid="quoted-message"] .quoted-mention,
+[data-testid="msg-container"] ._ak4g,
+[data-testid="msg-container"] [data-testid="ptt-status"],
+[data-testid="msg-container"] [aria-label="Voice note progress slider"],
+[data-testid="media-canvas-img"],
+[data-testid="media-url-provider"],
+[data-testid="media-canvas"],
+[data-testid="video-content"],
+[data-testid="image-thumb-gif"],
+[data-testid^="link-preview-thumbnail"],
+[data-testid="link-preview-container"],
+[data-testid="document-thumb"] span[dir="auto"],
+[data-testid="document-thumb"] [data-testid="type"],
+[data-testid="sticker-container"],
+.lexical-rich-text-input,
+[data-testid="drawer-right"] span[data-testid*="selectable-text"],
+[data-testid="drawer-right"] img,
+[data-testid="status-thumbnail"],
+:where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) [data-testid="cell-frame-title"],
+:where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) span,
+[data-testid="reaction-bubble"],
+[data-testid="addon-bubble-container"] button[aria-label*="reaction" i],
+[data-testid="msg-container"] [aria-label*="reaction" i] {
+  will-change: filter;
+}
+
+/* =============================================================================
+ * CONTACT NAME
+ *   - Chat-list + community/status row names: the span inside
+ *     [data-testid="cell-frame-title"]. We blur the WHOLE title cell (covers
+ *     names with NO `title` attribute too — the old [title] requirement is why
+ *     community names never blurred). EXCLUDES community-tab cells, which have
+ *     their own toggle (see COMMUNITIES).
+ *   - Open-chat header title: span[title] in #main header.
+ *   - Group-chat sender name + phone number inside a message bubble:
+ *     [data-testid="author"] and the sibling number span [testid="author"]
+ *     (note: that one uses bare `testid`, not `data-testid`).
+ * ===========================================================================*/
+[data-testid="cell-frame-title"]:not(:where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) *),
+#main header span[title],
+[data-testid="conversation-info-header-chat-title"],
+[data-testid="recent-search-item"] span[title],
+[data-testid="author"],
+[testid="author"],
+[data-testid="group-info-top-card-subtitle"],
+[data-testid="cell-frame-container"] span._ao3e[dir="auto"],
+[data-testid="cell-frame-container"] [data-testid="cell-frame-label"] span[dir="auto"],
+#main header span._ao3e[dir="auto"] {
+  filter: blur(var(--wa-nm-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="cell-frame-title"]:not(:where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) *),
+html.wa-off #main header span[title],
+html.wa-off [data-testid="conversation-info-header-chat-title"],
+html.wa-off [data-testid="recent-search-item"] span[title],
+html.wa-off [data-testid="author"],
+html.wa-off [testid="author"],
+html.wa-off [data-testid="group-info-top-card-subtitle"],
+html.wa-off [data-testid="cell-frame-container"] span._ao3e[dir="auto"],
+html.wa-off [data-testid="cell-frame-container"] [data-testid="cell-frame-label"] span[dir="auto"],
+html.wa-off #main header span._ao3e[dir="auto"],
+html.wa-show-contactName [data-testid="message-yourself-row"] img,
+html.wa-show-contactName [data-testid="cell-frame-title"]:not(:where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) *),
+html.wa-show-contactName #main header span[title],
+html.wa-show-contactName [data-testid="conversation-info-header-chat-title"],
+html.wa-show-contactName [data-testid="recent-search-item"] span[title],
+html.wa-show-contactName [data-testid="author"],
+html.wa-show-contactName [testid="author"],
+html.wa-show-contactName [data-testid="group-info-top-card-subtitle"],
+html.wa-show-contactName [data-testid="cell-frame-container"] span._ao3e[dir="auto"],
+html.wa-show-contactName [data-testid="cell-frame-container"] [data-testid="cell-frame-label"] span[dir="auto"],
+html.wa-show-contactName #main header span._ao3e[dir="auto"] {
+  filter: none !important;
+}
+
+html:not(.wa-no-hover) [data-testid="cell-frame-title"]:hover,
+html:not(.wa-no-hover) #main header span[title]:hover,
+html:not(.wa-no-hover) [data-testid="conversation-info-header-chat-title"]:hover,
+html:not(.wa-no-hover) [data-testid="recent-search-item"] span[title]:hover,
+html:not(.wa-no-hover) [data-testid="author"]:hover,
+html:not(.wa-no-hover) [testid="author"]:hover,
+html:not(.wa-no-hover) [data-testid="group-info-top-card-subtitle"]:hover,
+html:not(.wa-no-hover) [data-testid="cell-frame-container"] span._ao3e[dir="auto"]:hover,
+html:not(.wa-no-hover) [data-testid="cell-frame-container"] [data-testid="cell-frame-label"] span[dir="auto"]:hover,
+html:not(.wa-no-hover) #main header span._ao3e[dir="auto"]:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * PROFILE PICTURE
+ *   Avatars carry alt="" and live in [data-testid="cell-frame-container"] (chat
+ *   list, community list, status list). Also covered:
+ *     - the open-chat header avatar: #main header img + group-chat-profile-picture
+ *       (and its text-initials placeholder when the contact has no photo).
+ *     - the sender avatar shown beside a VOICE NOTE: img._ao3e inside msg-container
+ *       (._ak4n kept as fallback for older WhatsApp builds).
+ *   Drawer (contact-info) photos are governed by CONTACT INFO, not here.
+ *
+ *   SVG AVATARS: newer WhatsApp builds render avatars as an <svg> with a
+ *   circular <mask> wrapping an <image xlink:href="…"> instead of a plain <img>
+ *   (see profilenothide.txt). The old `img` selectors miss these entirely, so
+ *   every group of rules below also targets `svg image` under the same
+ *   containers. CSS filter applies to the SVG <image> leaf just like an <img>.
+ * ===========================================================================*/
+[data-testid="navbar-item-me-tab-photo"] img,
+[data-testid="message-yourself-row"] img,
+[data-testid="cell-frame-container"] img,
+[data-testid="cell-frame-container"] svg image,
+[data-testid^="chatlist-message-"] img,
+[data-testid="conversation-header"] img,
+[data-testid="conversation-header"] svg image,
+[data-testid="group-chat-profile-picture"] img,
+[data-testid="group-chat-profile-picture"] svg image,
+[data-testid="group-chat-profile-picture"] [data-testid="profile-first-initial"],
+[data-testid="group-chat-profile-picture"] [data-testid="profile-second-initial"],
+[data-testid="recent-search-item"] img,
+[data-testid="recent-search-item"] svg image,
+[data-testid="recent-search-item"] [data-testid="default-contact-refreshed"],
+._ak4n img,
+[data-testid="msg-container"] img._ao3e,
+[data-testid="msg-container"] svg image,
+[data-testid="msg-container"] img[draggable="false"][tabindex="-1"][alt=""] {
+  filter: blur(var(--wa-pp-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="navbar-item-me-tab-photo"] img,
+html.wa-off [data-testid="message-yourself-row"] img,
+html.wa-off [data-testid="cell-frame-container"] img,
+html.wa-off [data-testid="cell-frame-container"] svg image,
+html.wa-off [data-testid^="chatlist-message-"] img,
+html.wa-off #main header img,
+html.wa-off #main header svg image,
+html.wa-off [data-testid="conversation-header"] img,
+html.wa-off [data-testid="conversation-header"] svg image,
+html.wa-off [data-testid="group-chat-profile-picture"] img,
+html.wa-off [data-testid="group-chat-profile-picture"] svg image,
+html.wa-off [data-testid="group-chat-profile-picture"] [data-testid="profile-first-initial"],
+html.wa-off [data-testid="group-chat-profile-picture"] [data-testid="profile-second-initial"],
+html.wa-off [data-testid="recent-search-item"] img,
+html.wa-off [data-testid="recent-search-item"] svg image,
+html.wa-off [data-testid="recent-search-item"] [data-testid="default-contact-refreshed"],
+html.wa-off ._ak4n img,
+html.wa-off [data-testid="msg-container"] img._ao3e,
+html.wa-off [data-testid="msg-container"] svg image,
+html.wa-off [data-testid="msg-container"] img[draggable="false"][tabindex="-1"][alt=""],
+html.wa-show-profilePic [data-testid="navbar-item-me-tab-photo"] img,
+html.wa-show-profilePic [data-testid="message-yourself-row"] img,
+html.wa-show-profilePic [data-testid="cell-frame-container"] img,
+html.wa-show-profilePic [data-testid="cell-frame-container"] svg image,
+html.wa-show-profilePic [data-testid^="chatlist-message-"] img,
+html.wa-show-profilePic #main header img,
+html.wa-show-profilePic #main header svg image,
+html.wa-show-profilePic [data-testid="conversation-header"] img,
+html.wa-show-profilePic [data-testid="conversation-header"] svg image,
+html.wa-show-profilePic [data-testid="group-chat-profile-picture"] img,
+html.wa-show-profilePic [data-testid="group-chat-profile-picture"] svg image,
+html.wa-show-profilePic [data-testid="group-chat-profile-picture"] [data-testid="profile-first-initial"],
+html.wa-show-profilePic [data-testid="group-chat-profile-picture"] [data-testid="profile-second-initial"],
+html.wa-show-profilePic [data-testid="recent-search-item"] img,
+html.wa-show-profilePic [data-testid="recent-search-item"] svg image,
+html.wa-show-profilePic [data-testid="recent-search-item"] [data-testid="default-contact-refreshed"],
+html.wa-show-profilePic ._ak4n img,
+html.wa-show-profilePic [data-testid="msg-container"] img._ao3e,
+html.wa-show-profilePic [data-testid="msg-container"] svg image,
+html.wa-show-profilePic [data-testid="msg-container"] img[draggable="false"][tabindex="-1"][alt=""] {
+  filter: none !important;
+}
+
+
+/* SVG avatars are decorative (aria-hidden) and WhatsApp ships them with
+ * pointer-events disabled, so svg:hover / image:hover never fire and the pic
+ * could never be revealed. Force pointer-events back on the avatar svg+image so
+ * the per-avatar hover reveal below works. */
+[data-testid="cell-frame-container"] svg image,
+[data-testid="conversation-header"] img,
+[data-testid="conversation-header"] svg,
+[data-testid="conversation-header"] svg image,
+[data-testid="group-chat-profile-picture"] svg,
+[data-testid="group-chat-profile-picture"] svg image,
+[data-testid="recent-search-item"] svg,
+[data-testid="recent-search-item"] svg image,
+[data-testid="msg-container"] svg,
+[data-testid="msg-container"] svg image,
+html:not(.wa-no-hover) [data-testid^="chatlist-message-"] img {
+  pointer-events: auto !important;
+}
+
+html:not(.wa-no-hover) [data-testid="navbar-item-me-tab-photo"] img:hover,
+html:not(.wa-no-hover) [data-testid="message-yourself-row"] img:hover,
+html:not(.wa-no-hover) [data-testid="cell-frame-container"] img:hover,
+html:not(.wa-no-hover) [data-testid="cell-frame-container"] svg:hover,
+html:not(.wa-no-hover) [data-testid="cell-frame-container"] svg:hover image,
+html:not(.wa-no-hover) [data-testid^="chatlist-message-"] img:hover,
+html:not(.wa-no-hover) #main header img:hover,
+html:not(.wa-no-hover) #main header svg:hover image,
+html:not(.wa-no-hover) [data-testid="conversation-header"] img:hover,
+html:not(.wa-no-hover) [data-testid="conversation-header"] svg:hover image,
+html:not(.wa-no-hover) [data-testid="group-chat-profile-picture"] img:hover,
+html:not(.wa-no-hover) [data-testid="group-chat-profile-picture"] svg:hover image,
+html:not(.wa-no-hover) [data-testid="group-chat-profile-picture"] [data-testid="profile-first-initial"]:hover,
+html:not(.wa-no-hover) [data-testid="group-chat-profile-picture"] [data-testid="profile-second-initial"]:hover,
+html:not(.wa-no-hover) [data-testid="recent-search-item"] img:hover,
+html:not(.wa-no-hover) [data-testid="recent-search-item"] svg:hover image,
+html:not(.wa-no-hover) [data-testid="recent-search-item"] [data-testid="default-contact-refreshed"]:hover,
+html:not(.wa-no-hover) ._ak4n img:hover,
+html:not(.wa-no-hover) [data-testid="msg-container"] img._ao3e:hover,
+html:not(.wa-no-hover) [data-testid="msg-container"] svg:hover image,
+html:not(.wa-no-hover) [data-testid="msg-container"] img[draggable="false"][tabindex="-1"][alt=""]:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * LAST MESSAGE (sidebar preview line)
+ *   The preview text + send status live in [data-testid="cell-frame-secondary"].
+ *   We blur its spans so the preview is hidden while the row layout stays intact.
+ * ===========================================================================*/
+[data-testid="cell-frame-secondary"] span {
+  filter: blur(var(--wa-msp-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="cell-frame-secondary"] span,
+html.wa-show-lastMessage [data-testid="cell-frame-secondary"] span {
+  filter: none !important;
+}
+
+html:not(.wa-no-hover) [data-testid="cell-frame-secondary"]:hover span {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * CHAT MESSAGES (text bubbles in the open conversation)
+ *   The message text is span[data-testid="selectable-text"]. We scope it to a
+ *   message bubble ([data-testid="msg-container"]) so the drawer's
+ *   contact-info-subtitle (which reuses "selectable-text") is NOT caught here.
+ *   Emoji-only messages render an <img data-testid="selectable-text"> inside that
+ *   span, so blurring the span covers them too. Hover reveal fires from the whole
+ *   bubble — this is the fix for "emoji blurs but won't unblur on hover".
+ * ===========================================================================*/
+[data-testid="msg-container"] [data-testid~="selectable-text"],
+[data-testid="msg-container"] [data-testid~="selectable-text"] img.emoji,
+[data-testid="msg-container"] [data-testid~="selectable-text"] img[data-plain-text],
+[data-testid="msg-container"] span._ao3e[dir="auto"],
+[data-testid="link-preview-title"],
+[data-testid="url-element"] {
+  filter: blur(var(--wa-ms-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="msg-container"] [data-testid~="selectable-text"],
+html.wa-off [data-testid="msg-container"] [data-testid~="selectable-text"] img.emoji,
+html.wa-off [data-testid="msg-container"] [data-testid~="selectable-text"] img[data-plain-text],
+html.wa-off [data-testid="msg-container"] span._ao3e[dir="auto"],
+html.wa-off [data-testid="link-preview-title"],
+html.wa-off [data-testid="url-element"],
+html.wa-show-chatMessages [data-testid="msg-container"] [data-testid~="selectable-text"],
+html.wa-show-chatMessages [data-testid="msg-container"] [data-testid~="selectable-text"] img.emoji,
+html.wa-show-chatMessages [data-testid="msg-container"] [data-testid~="selectable-text"] img[data-plain-text],
+html.wa-show-chatMessages [data-testid="msg-container"] span._ao3e[dir="auto"],
+html.wa-show-chatMessages [data-testid="link-preview-title"],
+html.wa-show-chatMessages [data-testid="url-element"] {
+  filter: none !important;
+}
+
+html:not(.wa-no-hover) [data-testid="msg-container"] [data-testid~="selectable-text"]:hover,
+html:not(.wa-no-hover) [data-testid="msg-container"] [data-testid~="selectable-text"]:hover img.emoji,
+html:not(.wa-no-hover) [data-testid="msg-container"] [data-testid~="selectable-text"]:hover img[data-plain-text],
+html:not(.wa-no-hover) [data-testid="msg-container"] [data-testid~="selectable-text"]:hover span._ao3e[dir="auto"],
+html:not(.wa-no-hover) [data-testid="msg-container"] span._ao3e[dir="auto"]:hover,
+html:not(.wa-no-hover) [data-testid="link-preview-title"]:hover,
+html:not(.wa-no-hover) [data-testid="url-element"]:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * QUOTED / REPLY MESSAGES
+ *   A quoted message ([data-testid="quoted-message"]) appears in two places:
+ *     1. inside a message bubble (the reply preview attached to a sent/received
+ *        message) — that's inside msg-container, but its body text uses the
+ *        `quoted-mention` selectable-text which the bubble rule's structure can
+ *        miss; and
+ *     2. in the compose reply preview ([data-testid="popup_panel"]) which sits
+ *        ABOVE the compose bar, entirely OUTSIDE msg-container — so the
+ *        msg-container-scoped chat-message rule never reached it and the quoted
+ *        text stayed readable.
+ *   We blur the quoted body text directly. (The author name inside is already
+ *   covered by CONTACT NAME's [data-testid="author"] rule.) Governed by the
+ *   chatMessages toggle so it reveals together with normal message text.
+ * ===========================================================================*/
+[data-testid="quoted-message"] [data-testid~="selectable-text"],
+[data-testid="quoted-message"] .quoted-mention,
+[data-testid="msg-container"] .copyable-text,
+[data-testid="msg-container"] [data-testid="quoted-message"],
+[data-testid="msg-container"] [data-testid="forwarded-header"] {
+  filter: blur(var(--wa-ms-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="quoted-message"] [data-testid~="selectable-text"],
+html.wa-off [data-testid="quoted-message"] .quoted-mention,
+html.wa-off [data-testid="msg-container"] .copyable-text,
+html.wa-off [data-testid="msg-container"] [data-testid="quoted-message"],
+html.wa-off [data-testid="msg-container"] [data-testid="forwarded-header"],
+html.wa-show-chatMessages [data-testid="quoted-message"] [data-testid~="selectable-text"],
+html.wa-show-chatMessages [data-testid="quoted-message"] .quoted-mention,
+html.wa-show-chatMessages [data-testid="msg-container"] .copyable-text,
+html.wa-show-chatMessages [data-testid="msg-container"] [data-testid="quoted-message"],
+html.wa-show-chatMessages [data-testid="msg-container"] [data-testid="forwarded-header"] {
+  filter: none !important;
+}
+
+html:not(.wa-no-hover) [data-testid="quoted-message"]:hover [data-testid~="selectable-text"],
+html:not(.wa-no-hover) [data-testid="quoted-message"]:hover .quoted-mention,
+html:not(.wa-no-hover) [data-testid="msg-container"] .copyable-text:hover,
+html:not(.wa-no-hover) [data-testid="msg-container"] [data-testid="quoted-message"]:hover,
+html:not(.wa-no-hover) [data-testid="msg-container"] [data-testid="forwarded-header"]:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * VOICE NOTES (audio player row)
+ *   The player UI is the ._ak4g wrapper (waveform + duration + speed). We also
+ *   blur the standalone ptt-status icon and the progress slider as
+ *   belt-and-suspenders. (The sender avatar beside it is handled by PROFILE PIC.)
+ * ===========================================================================*/
+[data-testid="msg-container"] ._ak4g,
+[data-testid="msg-container"] [data-testid="ptt-status"],
+[data-testid="msg-container"] [aria-label="Voice note progress slider"] {
+  filter: blur(var(--wa-vn-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="msg-container"] ._ak4g,
+html.wa-off [data-testid="msg-container"] [data-testid="ptt-status"],
+html.wa-off [data-testid="msg-container"] [aria-label="Voice note progress slider"],
+html.wa-show-voiceNotes [data-testid="msg-container"] ._ak4g,
+html.wa-show-voiceNotes [data-testid="msg-container"] [data-testid="ptt-status"],
+html.wa-show-voiceNotes [data-testid="msg-container"] [aria-label="Voice note progress slider"] {
+  filter: none !important;
+}
+
+html:not(.wa-no-hover) [data-testid="msg-container"] ._ak4g:hover,
+html:not(.wa-no-hover) [data-testid="msg-container"] [data-testid="ptt-status"]:hover,
+html:not(.wa-no-hover) [data-testid="msg-container"] [aria-label="Voice note progress slider"]:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * MEDIA (images / videos / GIFs / documents — chat bubbles AND the info gallery)
+ *   The rendered media surface is the bg-image div [data-testid="media-canvas-img"];
+ *   its wrappers are [data-testid="media-url-provider"] and [data-testid="media-canvas"].
+ *   These appear ONLY in message bubbles and the contact-info media gallery —
+ *   never in sidebar cells — so they can be targeted globally. This single block
+ *   covers: video-in-chat, image-in-chat, GIFs, attached documents (cv/pdf), and
+ *   the drawer gallery's gif/video/doc thumbnails that previously slipped through.
+ * ===========================================================================*/
+[data-testid="media-canvas-img"],
+[data-testid="media-url-provider"],
+[data-testid="media-canvas"],
+[data-testid="video-content"],
+[data-testid="image-thumb-gif"],
+[data-testid^="link-preview-thumbnail"],
+[data-testid="link-preview-container"],
+[data-testid="quoted-message"] [data-testid="chat-msg-symbol"],
+[aria-label="Quoted message"] [data-testid="chat-msg-symbol"],
+[aria-label="Quoted message"] [style*="background-image"],
+[data-testid="document-thumb"] [style*="background-image"],
+[data-testid="document-thumb"] span[dir="auto"],
+[data-testid="document-thumb"] [data-testid="type"] {
+  filter: blur(var(--wa-mdp-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="media-canvas-img"],
+html.wa-off [data-testid="media-url-provider"],
+html.wa-off [data-testid="media-canvas"],
+html.wa-off [data-testid="video-content"],
+html.wa-off [data-testid="image-thumb-gif"],
+html.wa-off [data-testid^="link-preview-thumbnail"],
+html.wa-off [data-testid="link-preview-container"],
+html.wa-off [data-testid="quoted-message"] [data-testid="chat-msg-symbol"],
+html.wa-off [aria-label="Quoted message"] [data-testid="chat-msg-symbol"],
+html.wa-off [aria-label="Quoted message"] [style*="background-image"],
+html.wa-off [data-testid="document-thumb"] [style*="background-image"],
+html.wa-off [data-testid="document-thumb"] span[dir="auto"],
+html.wa-off [data-testid="document-thumb"] [data-testid="type"],
+html.wa-show-media [data-testid="media-canvas-img"],
+html.wa-show-media [data-testid="media-url-provider"],
+html.wa-show-media [data-testid="media-canvas"],
+html.wa-show-media [data-testid="video-content"],
+html.wa-show-media [data-testid="image-thumb-gif"],
+html.wa-show-media [data-testid^="link-preview-thumbnail"],
+html.wa-show-media [data-testid="link-preview-container"],
+html.wa-show-media [data-testid="quoted-message"] [data-testid="chat-msg-symbol"],
+html.wa-show-media [aria-label="Quoted message"] [data-testid="chat-msg-symbol"],
+html.wa-show-media [aria-label="Quoted message"] [style*="background-image"],
+html.wa-show-media [data-testid="document-thumb"] [style*="background-image"],
+html.wa-show-media [data-testid="document-thumb"] span[dir="auto"],
+html.wa-show-media [data-testid="document-thumb"] [data-testid="type"] {
+  filter: none !important;
+}
+
+html:not(.wa-no-hover) [data-testid="media-canvas"]:hover,
+html:not(.wa-no-hover) [data-testid="media-url-provider"]:hover,
+html:not(.wa-no-hover) [data-testid="media-canvas"]:hover [data-testid="media-canvas-img"],
+html:not(.wa-no-hover) [data-testid="media-url-provider"]:hover [data-testid="media-canvas-img"],
+/* Full-screen STATUS viewer: the image lives in media-url-provider, but caption
+   and control overlays paint on top of it and steal the pointer, so a direct
+   :hover on media-url-provider never fires. Reveal it whenever the status-viewer
+   container (the ancestor of BOTH the image and those overlays) is hovered. */
+html:not(.wa-no-hover) :has(> button > [data-testid="media-url-provider"]):hover [data-testid="media-url-provider"],
+html:not(.wa-no-hover) [data-testid="video-content"]:hover,
+html:not(.wa-no-hover) [data-testid="image-thumb-gif"]:hover,
+html:not(.wa-no-hover) [data-testid^="link-preview-thumbnail"]:hover,
+html:not(.wa-no-hover) [data-testid="link-preview-container"]:hover,
+html:not(.wa-no-hover) [aria-label="Quoted message"]:hover [style*="background-image"],
+html:not(.wa-no-hover) [data-testid="document-thumb"]:hover [style*="background-image"],
+html:not(.wa-no-hover) [data-testid="document-thumb"]:hover span[dir="auto"],
+html:not(.wa-no-hover) [data-testid="document-thumb"]:hover [data-testid="type"] {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * STICKERS
+ *   A sticker message is wrapped by [data-testid="sticker-container"] (its <img>
+ *   carries alt="Sticker with: …"). Blurring the container covers the image.
+ * ===========================================================================*/
+[data-testid="sticker-container"] {
+  filter: blur(var(--wa-st-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="sticker-container"],
+html.wa-show-stickers [data-testid="sticker-container"] {
+  filter: none !important;
+}
+
+html:not(.wa-no-hover) [data-testid="sticker-container"]:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * SEARCHBAR
+ *   Contact Searchbar
+ * ===========================================================================*/
+[data-testid="chat-list-search-container"] input {
+  filter: blur(var(--wa-search-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="chat-list-search-container"] input,
+html.wa-show-searchbar [data-testid="chat-list-search-container"] input {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+html:not(.wa-no-hover) [data-testid="chat-list-search-container"] input:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * COMPOSE BAR (message text input)
+ *   The editable is wrapped by .lexical-rich-text-input. We blur that wrapper so
+ *   already-typed text isn't shoulder-surfable. It stays blurred even while
+ *   focused/active — it reveals ONLY on hover (when hover-reveal is on), so the
+ *   text is hidden the moment the pointer leaves, even mid-typing.
+ * ===========================================================================*/
+.lexical-rich-text-input,
+[data-testid="conversation-compose-box-input"] {
+  filter: blur(var(--wa-cb-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off .lexical-rich-text-input,
+html.wa-off [data-testid="conversation-compose-box-input"],
+[data-testid="compose-box"],
+html.wa-show-composeBar .lexical-rich-text-input,
+html.wa-show-composeBar [data-testid="conversation-compose-box-input"],
+html.wa-show-composeBar [data-testid="compose-box"] {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+html:not(.wa-no-hover) .lexical-rich-text-input:hover,
+html:not(.wa-no-hover) [data-testid="conversation-compose-box-input"]:hover,
+html:not(.wa-no-hover) [data-testid="compose-box"]:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * CONTACT INFO DRAWER
+ *   The right-side details panel ([data-testid="drawer-right"]). We blur its
+ *   text rows (name, phone number, business about) and its profile/member photos
+ *   (<img>). The media GALLERY inside the drawer uses the media-canvas hooks and
+ *   is governed by MEDIA above, so toggling Media also clears the gallery.
+ *   Drawer text uses the "selectable-text" hook (contact-info-subtitle, etc.).
+ * ===========================================================================*/
+[data-testid="drawer-right"] span[data-testid*="selectable-text"],
+[data-testid="drawer-right"] span._ao3e,
+[data-testid="drawer-right"] img {
+  filter: blur(var(--wa-ci-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="drawer-right"] span[data-testid*="selectable-text"],
+html.wa-off [data-testid="drawer-right"] span._ao3e,
+html.wa-off [data-testid="drawer-right"] img,
+html.wa-show-contactInfo [data-testid="drawer-right"] span[data-testid*="selectable-text"],
+html.wa-show-contactInfo [data-testid="drawer-right"] span._ao3e,
+html.wa-show-contactInfo [data-testid="drawer-right"] img {
+  filter: none !important;
+}
+
+html:not(.wa-no-hover) [data-testid="drawer-right"] span[data-testid*="selectable-text"]:hover,
+html:not(.wa-no-hover) [data-testid="drawer-right"] span._ao3e:hover,
+html:not(.wa-no-hover) [data-testid="drawer-right"] img:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * STATUS (Status list thumbnails / images)
+ *   Each status row's preview is [data-testid="status-thumbnail"] (a bg-image
+ *   div). The contact NAME in the row is already covered by CONTACT NAME; this
+ *   category hides only the status image/video preview.
+ * ===========================================================================*/
+[data-testid="status-thumbnail"],
+[data-testid="status-header-add-status"] {
+  filter: blur(var(--wa-stt-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="status-thumbnail"],
+html.wa-off [data-testid="status-header-add-status"],
+html.wa-show-status [data-testid="status-thumbnail"],
+html.wa-show-status [data-testid="status-header-add-status"] {
+  filter: none !important;
+}
+
+html:not(.wa-no-hover) [data-testid="status-thumbnail"]:hover,
+html:not(.wa-no-hover) [data-testid="status-header-add-status"]:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * COMMUNITIES (community + subgroup names in the Communities tab)
+ *   Community/subgroup cells reuse [data-testid="cell-frame-title"] but their
+ *   names carry NO `title` attribute, so the old name rule missed them. Their
+ *   avatars are already covered by PROFILE PICTURE (cell-frame-container img);
+ *   this category governs the NAMES, kept separate from CONTACT NAME (which
+ *   excludes these cells) so the two toggles don't fight.
+ * ===========================================================================*/
+:where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) [data-testid="cell-frame-title"],
+:where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) span,
+[data-testid="drawer-title-body"] span[dir="auto"] {
+  filter: blur(var(--wa-comm-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off :where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) [data-testid="cell-frame-title"],
+html.wa-off :where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) span,
+html.wa-off [data-testid="drawer-title-body"] span[dir="auto"],
+html.wa-show-communities :where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) [data-testid="cell-frame-title"],
+html.wa-show-communities :where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) span,
+html.wa-show-communities [data-testid="drawer-title-body"] span[dir="auto"] {
+  filter: none !important;
+}
+
+html:not(.wa-no-hover) :where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) [data-testid="cell-frame-title"]:hover,
+html:not(.wa-no-hover) :where([data-testid="community-tab-community-cell"], [data-testid="community-tab-subgroup-cell"], [data-testid="community-tab-view-all-cell"]) span:hover,
+html:not(.wa-no-hover) [data-testid="drawer-title-body"] span[dir="auto"]:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* =============================================================================
+ * REACTIONS
+ *   A reaction is rendered as button[data-testid="reaction-bubble"] inside
+ *   [data-testid="addon-bubble-container"]. That container sits as a SIBLING of
+ *   the bubble's body, often outside [data-testid="msg-container"]'s text node,
+ *   so the old msg-container-scoped ARIA match missed it. We target the durable
+ *   reaction-bubble hook directly (plus the ARIA fallback) so every reaction
+ *   chip blurs regardless of where it is mounted.
+ * ===========================================================================*/
+[data-testid="reaction-bubble"],
+[data-testid="addon-bubble-container"] button[aria-label*="reaction" i],
+[data-testid="msg-container"] [aria-label*="reaction" i] {
+  filter: blur(var(--wa-rx-blur)) grayscale(1) !important;
+  transition: filter 0s ease-in-out !important;
+}
+
+html.wa-off [data-testid="reaction-bubble"],
+html.wa-off [data-testid="addon-bubble-container"] button[aria-label*="reaction" i],
+html.wa-off [data-testid="msg-container"] [aria-label*="reaction" i],
+html.wa-show-reactions [data-testid="reaction-bubble"],
+html.wa-show-reactions [data-testid="addon-bubble-container"] button[aria-label*="reaction" i],
+html.wa-show-reactions [data-testid="msg-container"] [aria-label*="reaction" i] {
+  filter: none !important;
+}
+
+html:not(.wa-no-hover) [data-testid="reaction-bubble"]:hover,
+html:not(.wa-no-hover) [data-testid="addon-bubble-container"]:hover button[aria-label*="reaction" i],
+html:not(.wa-no-hover) [data-testid="msg-container"] [aria-label*="reaction" i]:hover {
+  filter: none !important;
+  transition-delay: 0s !important;
+}
+
+/* -----------------------------------------------------------------------------
+ * FAIL-SAFE: until privacy_boot.js confirms the engine is ready (adds html.wa-ready),
+ * we keep blurring. If settings can't load, we stay blurred — privacy-first.
+ * (No extra rule needed: absence of wa-show-* / wa-off already means blurred.)
+ * --------------------------------------------------------------------------- */
+
+/* =============================================================================
+ * SPRINT 2 — PANIC MODE  (html.wa-panic + #wa-panic-overlay)
+ * -----------------------------------------------------------------------------
+ * Toggled by the keyboard shortcut (Ctrl+Shift+Z) and dismissed by the same
+ * shortcut or Escape (or, when a lock is set, by entering the PIN/password).
+ * privacy_boot.js toggles the `wa-panic` class on <html> AND mounts an interactive
+ * overlay node (#wa-panic-overlay). The wipe is instant and fully reversible.
+ *
+ *   - `html.wa-panic *` (except the overlay subtree) hides every WhatsApp element
+ *     via visibility (not display), so layout/state is preserved and restore is
+ *     seamless.
+ *   - #wa-panic-overlay and ALL its descendants re-assert visibility so the lock
+ *     card, keypad, and inputs show through the curtain.
+ * ===========================================================================*/
+/* NOTE: the old approach hid every DOM element via a universal selector
+   (html.wa-panic *:not(...)) which forced O(n) style recalculation on
+   thousands of WhatsApp nodes — causing the activate/deactivate lag.
+   The overlay's solid opaque background + z-index:MAX already covers all
+   content visually, so no visibility manipulation is needed. */
+
+#wa-panic-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  display: grid !important;
+  place-items: center !important;
+  pointer-events: auto !important;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif !important;
+  color: #e8eef5 !important;
+  /* Layered: soft green glow blooms over a deep navy base. */
+  background:
+    radial-gradient(circle at 30% 25%, rgba(37, 211, 102, 0.16) 0%, transparent 45%),
+    radial-gradient(circle at 75% 80%, rgba(16, 120, 80, 0.18) 0%, transparent 50%),
+    linear-gradient(160deg, #0b1220 0%, #0d1a2b 55%, #08101c 100%) !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  animation: wa-panic-fade 0.18s ease both !important;
+}
+
+@keyframes wa-panic-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+#wa-panic-overlay .wa-panic-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 34px 38px !important;
+  border-radius: 22px !important;
+  /* Solid bg — backdrop-filter removed: everything behind is visibility:hidden
+     so it was blurring nothing and costing significant GPU time in Firefox. */
+  background: rgba(13, 24, 38, 0.97) !important;
+  border: 1px solid rgba(37, 211, 102, 0.22) !important;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  max-width: 90vw !important;
+}
+
+#wa-panic-overlay .wa-panic-shield {
+  color: #25d366 !important;
+  filter: drop-shadow(0 0 14px rgba(37, 211, 102, 0.45)) !important;
+  animation: wa-panic-pulse 2.6s ease-in-out infinite !important;
+  line-height: 0 !important;
+}
+
+@keyframes wa-panic-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.92;
+  }
+
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+#wa-panic-overlay .wa-panic-title {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.3px !important;
+  color: #f3f7fb !important;
+}
+
+#wa-panic-overlay .wa-panic-sub {
+  font-size: 0.86rem !important;
+  font-weight: 400 !important;
+  color: #8fa3b8 !important;
+  margin-top: -4px !important;
+}
+
+#wa-panic-overlay .wa-panic-sub b {
+  color: #25d366 !important;
+  font-weight: 700 !important;
+}
+
+/* --- PIN dots --- */
+#wa-panic-overlay .wa-panic-dots {
+  display: flex !important;
+  gap: 11px !important;
+  margin: 8px 0 2px !important;
+  min-height: 14px !important;
+}
+
+#wa-panic-overlay .wa-dot {
+  width: 12px !important;
+  height: 12px !important;
+  border-radius: 50% !important;
+  border: 1.5px solid rgba(143, 163, 184, 0.55) !important;
+  background: transparent !important;
+  transition: background 0.12s, border-color 0.12s, transform 0.12s !important;
+}
+
+#wa-panic-overlay .wa-dot.filled {
+  background: #25d366 !important;
+  border-color: #25d366 !important;
+  transform: scale(1.12) !important;
+}
+
+/* --- Keypad --- */
+#wa-panic-overlay .wa-panic-keypad {
+  display: grid !important;
+  grid-template-columns: repeat(3, 64px) !important;
+  gap: 10px !important;
+  margin-top: 6px !important;
+}
+
+#wa-panic-overlay .wa-key {
+  height: 56px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #e8eef5 !important;
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+  transition: background 0.12s, transform 0.06s, border-color 0.12s !important;
+}
+
+#wa-panic-overlay .wa-key:hover {
+  background: rgba(255, 255, 255, 0.09) !important;
+  border-color: rgba(37, 211, 102, 0.3) !important;
+}
+
+#wa-panic-overlay .wa-key:active {
+  transform: scale(0.94) !important;
+}
+
+#wa-panic-overlay .wa-key-spacer {
+  height: 56px !important;
+  pointer-events: none !important;
+}
+
+#wa-panic-overlay .wa-key-aux {
+  color: #8fa3b8 !important;
+}
+
+/* --- Password field --- */
+#wa-panic-overlay .wa-panic-pass {
+  display: flex !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+  width: 100% !important;
+}
+
+#wa-panic-overlay #wa-panic-input {
+  flex: 1 !important;
+  padding: 11px 13px !important;
+  border-radius: 11px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #f3f7fb !important;
+  font-size: 0.95rem !important;
+  font-family: inherit !important;
+  outline: none !important;
+}
+
+#wa-panic-overlay #wa-panic-input:focus {
+  border-color: rgba(37, 211, 102, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.12) !important;
+}
+
+#wa-panic-overlay .wa-panic-unlock {
+  padding: 11px 18px !important;
+  border-radius: 11px !important;
+  border: none !important;
+  background: #25d366 !important;
+  color: #07130c !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  font-family: inherit !important;
+  transition: filter 0.12s, transform 0.06s !important;
+}
+
+#wa-panic-overlay .wa-panic-unlock:hover {
+  filter: brightness(1.08) !important;
+}
+
+#wa-panic-overlay .wa-panic-unlock:active {
+  transform: scale(0.96) !important;
+}
+
+/* Pause the decorative shield pulse while the user is typing — avoids Firefox
+   running a transform animation concurrently with keyboard input processing. */
+#wa-panic-overlay .wa-panic-card:focus-within .wa-panic-shield {
+  animation-play-state: paused !important;
+}
+
+/* --- Error + shake --- */
+#wa-panic-overlay .wa-panic-err {
+  min-height: 16px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  color: #ff6b6b !important;
+  margin-top: 4px !important;
+}
+
+#wa-panic-overlay .wa-panic-card.wa-shake {
+  animation: wa-panic-shake 0.4s ease !important;
+}
+
+@keyframes wa-panic-shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
+}

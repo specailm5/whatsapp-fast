@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast, deterministic gates on the Rust crate + the injected JS. These fail fast
+  # without paying for a full release build.
+  checks:
+    name: fmt / clippy / test / js
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/desktop/src-tauri
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo fmt
+        run: cargo fmt -- --check
+
+      - name: cargo clippy
+        run: cargo clippy --message-format short -- -D warnings
+
+      - name: cargo test (lib)
+        run: cargo test --lib
+
+      - name: node --check injected JS
+        shell: bash
+        run: |
+          set -euo pipefail
+          trap 'rm -f ../ui/.inline.js' EXIT
+          node --check src/bridge.js
+          node --check src/page-notify.js
+          node --check src/rail_settings.js
+          node --check src/badge.js
+          node --check src/privacy_boot.js
+          # node --check cannot parse an .html file, so extract the inline <script> first.
+          node -e "const fs=require('fs');const h=fs.readFileSync('../ui/settings.html','utf8');const m=h.match(/<script>([\s\S]*?)<\/script>/);if(!m)throw new Error('inline <script> not found');fs.writeFileSync('../ui/.inline.js',m[1])"
+          node --check ../ui/.inline.js
+
+  # Full build (the NSIS installer). Kept in its own job so a green `checks` job still
+  # reports even if the heavy release build fails on a runner environment quirk.
+  build:
+    name: build (NSIS installer)
+    runs-on: windows-latest
+    needs: checks
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: pnpm build
+        run: pnpm build

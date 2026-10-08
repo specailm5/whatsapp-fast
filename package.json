@@ -1,0 +1,12 @@
+{
+  "name": "whatsapp-fast",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Fast native Windows shell for WhatsApp Web (Tauri)",
+  "scripts": {
+    "desktop:dev": "pnpm --filter @whatsapp-fast/desktop tauri dev",
+    "desktop:build": "pnpm --filter @whatsapp-fast/desktop tauri build",
+    "build": "pnpm -r build"
+  },
+  "devDependencies": {}
+}
